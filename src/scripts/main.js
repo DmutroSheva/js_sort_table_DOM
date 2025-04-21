@@ -1,33 +1,42 @@
 'use strict';
 
-const table = document.querySelector('table');
-const tableHeadings = table.querySelectorAll('thead th');
-const tableBody = table.querySelector('tbody');
-const dataRows = tableBody.querySelectorAll('tr');
+const titleElement = document.querySelectorAll('th');
 
-tableHeadings.forEach((cell, index) => {
-  cell.addEventListener('click', (ev) => handleHeadingClick(ev, index));
-});
+titleElement.forEach((title) => {
+  title.addEventListener('click', () => {
+    // находим ближайшую таблицу
+    const table = title.closest('table');
+    // определяем индекс колонки
+    const columnIndex = title.cellIndex;
+    // получаем массив строк, чтобы применить к ним сортировку
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    const sortedRows = rows.sort((rowA, rowB) => {
+      const cellA = rowA.querySelectorAll('td')[columnIndex].innerText.trim();
+      const cellB = rowB.querySelectorAll('td')[columnIndex].innerText.trim();
 
-function handleHeadingClick(ev, index) {
-  const rowsCopy = [...dataRows];
+      let valueA, valueB;
 
-  rowsCopy.sort((a, b) => {
-    const aTextValue = getSanitizedTextContent(a.cells[index]);
-    const bTextValue = getSanitizedTextContent(b.cells[index]);
+      if (columnIndex === 2) {
+        valueA = parseFloat(cellA, 10);
+        valueB = parseFloat(cellB, 10);
+      } else if (columnIndex === 3) {
+        valueA = parseFloat(cellA.replace(/[$,]/g, ''));
+        valueB = parseFloat(cellB.replace(/[$,]/g, ''));
+      } else {
+        valueA = cellA;
+        valueB = cellB;
+      }
 
-    if (!isNaN(+aTextValue + +bTextValue)) {
-      return +aTextValue - +bTextValue;
-    }
+      if (typeof valueA === 'number' && typeof valueB === 'number') {
+        return valueA - valueB;
+      } else {
+        return valueA.localeCompare(valueB);
+      }
+    });
+    const tableBody = document.querySelector('tbody');
 
-    return aTextValue.localeCompare(bTextValue);
+    sortedRows.forEach((row) => {
+      tableBody.appendChild(row);
+    });
   });
-
-  for (const row of rowsCopy) {
-    tableBody.appendChild(row);
-  }
-}
-
-function getSanitizedTextContent(cell) {
-  return cell.textContent.replaceAll('$', '').replaceAll(',', '');
-}
+});
