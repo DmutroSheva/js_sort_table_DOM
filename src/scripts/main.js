@@ -1,30 +1,33 @@
 'use strict';
 
-document.addEventListener('DOMContentLoaded', () => {
-  const table = document.querySelector('table');
-  const headers = table.querySelectorAll('th');
-  const tbody = table.querySelector('tbody');
+const table = document.querySelector('table');
+const tableHeadings = table.querySelectorAll('thead th');
+const tableBody = table.querySelector('tbody');
+const dataRows = tableBody.querySelectorAll('tr');
 
-  headers.forEach((header, index) => {
-    header.addEventListener('click', () => {
-      const rows = Array.from(tbody.querySelectorAll('tr'));
-
-      const sortedRows = rows.sort((rowA, rowB) => {
-        const cellA = rowA.cells[index].textContent.trim();
-        const cellB = rowB.cells[index].textContent.trim();
-
-        const valueA = isNaN(cellA.replace(/[$,]/g, ''))
-          ? cellA
-          : parseFloat(cellA.replace(/[$,]/g, ''));
-        const valueB = isNaN(cellB.replace(/[$,]/g, ''))
-          ? cellB
-          : parseFloat(cellB.replace(/[$,]/g, ''));
-
-        return valueA > valueB ? 1 : -1;
-      });
-
-      tbody.innerHTML = '';
-      sortedRows.forEach((row) => tbody.appendChild(row));
-    });
-  });
+tableHeadings.forEach((cell, index) => {
+  cell.addEventListener('click', (ev) => handleHeadingClick(ev, index));
 });
+
+function handleHeadingClick(ev, index) {
+  const rowsCopy = [...dataRows];
+
+  rowsCopy.sort((a, b) => {
+    const aTextValue = getSanitizedTextContent(a.cells[index]);
+    const bTextValue = getSanitizedTextContent(b.cells[index]);
+
+    if (!isNaN(+aTextValue + +bTextValue)) {
+      return +aTextValue - +bTextValue;
+    }
+
+    return aTextValue.localeCompare(bTextValue);
+  });
+
+  for (const row of rowsCopy) {
+    tableBody.appendChild(row);
+  }
+}
+
+function getSanitizedTextContent(cell) {
+  return cell.textContent.replaceAll('$', '').replaceAll(',', '');
+}
